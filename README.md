@@ -124,6 +124,7 @@ Q1. How do I resolve "error: You must be logged in to the server (Unauthorized)"
 
 ## How to invoke the Product microservice API?
 ### Using Postman
+<TO BE ADDED>
 
 ## Next Steps
     - Connect to RDS with Security Groups mechanism
