@@ -1,0 +1,53 @@
+# AWS CodeBuild Requirements
+#
+# Make sure you are using Operating System as - Ubuntu in the AWS CodeBuild Project for below script to work
+#
+# Following environment variables are needed in AWS CodeBuild Project
+# ECR_PRODUCT_REPOSITORY_URI
+# ECR_REVIEW_REPOSITORY_URI
+# EKS_CLUSTER_NAME - e.g. my-eks-cluster
+# AWS_REGION - e.g. ap-south-1
+# ECR_REGISTRY e.g. <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com
+
+---
+version: 0.2
+phases:
+  install:
+    commands:
+      - curl -sS -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.23.7/2022-06-29/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl
+      - export PATH=$PWD/:$PATH
+      - aws sts get-caller-identity
+      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+      - export KUBECONFIG=$HOME/.kube/config
+      - kubectl cluster-info
+      - apt-get update -y && apt-get install -y jq python3-pip python3-dev && pip3 install --upgrade awscli
+  pre_build:
+    commands:
+      - PRODUCT_TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
+      - REVIEW_TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
+      - sed -i 's@PRODUCT_CONTAINER_IMAGE@'"$ECR_PRODUCT_REPOSITORY_URI:$PRODUCT_TAG"'@' k8s-microservices-full.yaml
+      - sed -i 's@REVIEW_CONTAINER_IMAGE@'"$ECR_REVIEW_REPOSITORY_URI:$REVIEW_TAG"'@' k8s-microservices-full.yaml
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - export KUBECONFIG=$HOME/.kube/config
+  build:
+    commands:
+# Command "cd" is only allowed in the build phase
+      - mvn clean install
+      - cd product && docker build -t $ECR_PRODUCT_REPOSITORY_URI:$PRODUCT_TAG . && cd ..
+      - cd review && docker build -t $ECR_REVIEW_REPOSITORY_URI:$REVIEW_TAG . && cd ..
+  post_build:
+    commands:
+      - docker push $ECR_PRODUCT_REPOSITORY_URI:$PRODUCT_TAG
+      - docker push $ECR_REVIEW_REPOSITORY_URI:$REVIEW_TAG
+      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+      - kubectl apply -f k8s-microservices-full.yaml
+      - printf '[{"name":"k8s-microservices","imageUri":"%s"}]' $REPOSITORY_URI:$PRODUCT_TAG > build.json
+      - printf '[{"name":"k8s-microservices","imageUri":"%s"}]' $REPOSITORY_URI:$REVIEW_TAG >> build.json
+      - cat k8s-microservices-full.yaml
+      - cat k8s-microservices-full.yaml >> build.json
+artifacts:
+  files: build.json
+cache:
+  paths:
+    - '/root/.m2/**/*'
