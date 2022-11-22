@@ -1,4 +1,4 @@
-# Code sample for Java SpringBoot based microservices with deployment on Amazon EKS with AWS CodePipeline
+# Java SpringBoot based microservices with deployment on Amazon EKS with AWS CodePipeline
 
 ## Objective
 
