@@ -58,7 +58,7 @@ Create AWS CodeBuild project named as - "aws-samples-k8s-microservices"
     - Runtime - Standard
     - Image - Select latest image available e.g. aws/codebuild/standard:6.0
     - Image version - Select - Always use the latest image for this runtme version
-    - Tick the "Privileged" checkbox. This flag is neede to build the Docker image inside the CodeBuild stage.
+    - Tick the "Privileged" checkbox. This flag is needed to build the Docker image inside the CodeBuild stage.
 - Create following environment variables as part of configuration
     1. ECR_PRODUCT_REPOSITORY_URI - ECR Repository for Product Container Image
     2. ECR_REVIEW_REPOSITORY_URI - ECR Repository for Review Container Image
