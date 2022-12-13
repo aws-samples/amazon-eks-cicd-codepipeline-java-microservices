@@ -32,7 +32,7 @@ Product microservice is internet facing and is exposed using Ingress controller.
 Create Amazon EKS Cluster with 3 Compute nodes with instance type t3.small or larger
 
 ### Amazon ECR
-Create Amazon ECR Repositories for Docker images for two microservices
+Create private Amazon ECR Repositories for Docker images for two microservices
 - Product
 - Review
 
